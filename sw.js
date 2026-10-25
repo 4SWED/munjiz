@@ -1,6 +1,6 @@
 /* مُنجز service worker: precache the whole app so it opens with no connection.
    Bump VERSION whenever any file below changes — the app then offers "تحديث". */
-const VERSION = 'munjiz-1.1.0';
+const VERSION = 'munjiz-1.2.0';
 const FILES = [
   './', 'index.html', 'core.js', 'app.js', 'manifest.webmanifest',
   'fonts/naskh-ar.woff2', 'fonts/naskh-la.woff2',

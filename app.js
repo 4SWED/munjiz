@@ -3,7 +3,7 @@
   'use strict';
   const { store, D, TYPES, PRIORITY, PALETTE, MONTHS, DAYS, icon, esc, toast, sheet, confirmSheet, toICS, saveFile, scheduleReminders, parseQuick } = Munjiz;
   const $ = (s, r = document) => r.querySelector(s);
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
 
   const now = new Date();
   const ui = {
@@ -21,7 +21,7 @@
     const th = store.settings().theme || 'auto';
     const mode = th === 'auto' ? (darkMQ.matches ? 'dark' : 'light') : th;
     document.documentElement.dataset.theme = mode;
-    $('#themeColor').content = mode === 'dark' ? '#1B1C21' : '#F6F2EA';
+    $('#themeColor').content = mode === 'dark' ? '#1A2030' : '#FFFCF5';
     $('#themeBtn').innerHTML = icon(mode === 'dark' ? 'sun' : 'moon', 21);
     $('#themeBtn').setAttribute('aria-label', mode === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي');
   }
@@ -47,7 +47,7 @@
         <button class="ck" data-act="toggle" data-id="${t.id}" aria-pressed="${t.done}" aria-label="${t.done ? 'إلغاء الإنجاز' : 'إنجاز'}: ${esc(t.title)}"><i>${icon('check', 14, 'stroke-width="3"')}</i></button>
         <button class="rb" data-act="edit" data-id="${t.id}"><span class="tt">${esc(t.title)}</span>
           <span class="mt">${when}${t.type === 'exam' ? '<span class="ex">اختبار</span>' : ''}${t.time ? `<span>${D.fmtTime(t.time)}</span>` : ''}${t.subject ? `<span class="sd"><i style="background:${s.color}"></i>${esc(s.name)}</span>` : ''}${t.type !== 'exam' && t.type !== 'task' ? `<span>${TYPES[t.type].label}</span>` : ''}${t.series ? icon('repeat', 13) : ''}${t.notes ? icon('note', 13) : ''}</span></button>
-        <button class="pf" data-act="prio" data-id="${t.id}" aria-label="الأولوية: ${PRIORITY[t.priority || 0].label} — اضغط للتغيير">${icon('flag', 19, (t.priority ? 'fill="currentColor"' : ''))}</button>
+        <button class="pf" data-act="prio" data-id="${t.id}" aria-label="الأولوية: ${PRIORITY[t.priority || 0].label} — اضغط للتغيير">${t.priority ? `<span class="stamp">${PRIORITY[t.priority].label}</span>` : icon('flag', 18)}</button>
       </div></li>`;
   }
   const listHTML = (arr, opt) => `<ul class="list">${arr.map((t) => rowHTML(t, opt)).join('')}</ul>`;
@@ -65,16 +65,10 @@
 
   function renderTabs() {
     const open = store.on(D.todayKey()).filter((t) => !t.done).length + store.overdue().length;
-    $('#tAgenda').innerHTML = `<span class="tw">${icon('check-square', 22)}${open ? `<span class="b">${open}</span>` : ''}</span>مهامي`;
-    $('#tCal').innerHTML = `${icon('calendar', 22)}التقويم`;
+    $('#tAgenda').innerHTML = `<span class="tw">${icon('check-square', 22)}${open ? `<span class="b">${open}</span>` : ''}</span><span class="tl">مهامي</span>`;
+    $('#tCal').innerHTML = `${icon('calendar', 22)}<span class="tl">التقويم</span>`;
     $('#tAgenda').setAttribute('aria-current', ui.tab === 'agenda' ? 'page' : 'false');
     $('#tCal').setAttribute('aria-current', ui.tab === 'cal' ? 'page' : 'false');
-  }
-
-  function ringSVG(done, total) {
-    const r = 24, c = 2 * Math.PI * r, pct = total ? done / total : 0;
-    return `<svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true"><circle cx="29" cy="29" r="${r}" fill="none" stroke="var(--line)" stroke-width="6"/>
-      <circle cx="29" cy="29" r="${r}" fill="none" stroke="${pct === 1 ? 'var(--ok)' : 'var(--accent)'}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - pct)}" transform="rotate(-90 29 29)"/></svg>`;
   }
 
   function renderAgenda() {
@@ -88,14 +82,19 @@
     // glance: one line answers "how's today?"
     const left = todayOpen.length;
     const line = !todayAll.length ? 'يومك فاضي — سجّل أول مهمة' : left ? `باقي ${left === 1 ? 'مهمة واحدة' : left === 2 ? 'مهمتان' : `${left} مهام`} من ${todayAll.length}` : 'أنجزت كل مهام اليوم';
-    let pills = '';
-    if (ex) { const n = D.diffDays(t, ex.date); pills += `<button class="pill exam" data-act="edit" data-id="${ex.id}">${icon('target', 15)}${esc(ex.title.length > 26 ? ex.title.slice(0, 25) + '…' : ex.title)} · ${n === 0 ? 'اليوم' : D.relative(ex.date)}</button>`; }
-    if (streak >= 2) pills += `<span class="pill streak">${icon('flame', 15)}${streak} أيام متتالية</span>`;
-    if (todayAll.length && !left) pills += `<span class="pill done">${icon('check', 15)}يومك مكتمل</span>`;
-    $('#glance').innerHTML = `<div class="glance">
-        <div class="ring">${ringSVG(todayDone.length, todayAll.length)}<b>${todayAll.length ? `${todayDone.length}/${todayAll.length}` : '—'}</b></div>
-        <div class="gd"><h1>${DAYS[dt.getDay()]}</h1><p>${dt.getDate()} ${MONTHS[dt.getMonth()]} · ${line}</p></div>
-      </div>${pills ? `<div class="pills">${pills}</div>` : ''}`;
+    let stamps = '';
+    if (streak >= 2) stamps += `<span class="stampx streak">${icon('flame', 14)}سلسلة ${streak} أيام</span>`;
+    if (todayAll.length && !left) stamps += `<span class="stampx done">${icon('check', 14)}يومك مكتمل</span>`;
+    let sticky = '';
+    if (ex) {
+      const n = D.diffDays(t, ex.date);
+      sticky = `<button class="sticky" data-act="edit" data-id="${ex.id}"><div class="cd">${n === 0 ? 'اليوم!' : D.relative(ex.date)}</div><span class="h">أقرب اختبار</span>
+        <div class="t">${esc(ex.title)}</div><div class="s">${D.fmtDay(ex.date)}${ex.time ? ' · ' + D.fmtTime(ex.time) : ''}</div></button>`;
+    }
+    $('#glance').innerHTML = `<div class="glance"><span class="num">${dt.getDate()}</span><div><h1>${DAYS[dt.getDay()]}</h1><p>${MONTHS[dt.getMonth()]} · ${line}</p></div></div>
+      ${todayAll.length ? `<div class="tally" aria-hidden="true">${todayAll.map((x) => `<i class="${x.done ? 'on' : ''}"></i>`).join('')}<span>${todayDone.length}/${todayAll.length}</span></div>` : ''}
+      ${stamps ? `<div class="stamps">${stamps}</div>` : ''}`;
+    $('#examNote').innerHTML = sticky;
 
     if (!store.all().length) {
       $('#agenda').innerHTML = `<div class="welcome"><h2>سجّل بجملة واحدة</h2>
@@ -106,16 +105,16 @@
     }
 
     let h = '';
-    if (over.length) h += `<div class="sec over"><div class="sec-h">${icon('alert', 17)}متأخرة <span class="n">${over.length}</span><button class="act" data-act="move-overdue">انقلها لليوم</button></div>${listHTML(over, { showDate: true })}</div>`;
-    h += `<div class="sec"><div class="sec-h">اليوم <span class="n">${todayOpen.length ? todayOpen.length + ' باقية' : ''}</span></div>`;
+    if (over.length) h += `<div class="sec over"><div class="sec-h">${icon('alert', 18)}<b>متأخرة</b> <span class="n">${over.length}</span><button class="act" data-act="move-overdue">انقلها لليوم</button></div>${listHTML(over, { showDate: true })}</div>`;
+    h += `<div class="sec"><div class="sec-h"><b>اليوم</b> <span class="n">${todayOpen.length ? todayOpen.length + ' باقية' : ''}</span></div>`;
     if (todayOpen.length || todayDone.length) {
       h += `<ul class="list">${todayOpen.map((x) => rowHTML(x)).join('')}${todayDone.length ? `<li><button class="fold" data-act="fold-done" aria-expanded="${ui.showDone}">${icon('chev-down', 16)}منجزة اليوم (${todayDone.length})</button></li>${ui.showDone ? todayDone.map((x) => rowHTML(x)).join('') : ''}` : ''}</ul>`;
-    } else h += `<div class="list"><div class="empty-day">لا مهام اليوم. اكتب فوق لتضيف.</div></div>`;
+    } else h += `<div class="list"><div class="empty-day">لا مهام اليوم — اكتب في السطر فوق لتضيف.</div></div>`;
     h += '</div>';
-    if (tomorrow.length) h += `<div class="sec"><div class="sec-h">غدًا <span class="n">${tomorrow.length}</span></div>${listHTML(tomorrow)}</div>`;
-    if (week.length) h += `<div class="sec"><div class="sec-h">هذا الأسبوع <span class="n">${week.length}</span></div>${listHTML(week, { showDate: true })}</div>`;
+    if (tomorrow.length) h += `<div class="sec"><div class="sec-h"><b>غدًا</b> <span class="n">${tomorrow.length}</span></div>${listHTML(tomorrow)}</div>`;
+    if (week.length) h += `<div class="sec"><div class="sec-h"><b>هذا الأسبوع</b> <span class="n">${week.length}</span></div>${listHTML(week, { showDate: true })}</div>`;
     if (later.length) {
-      h += `<div class="sec"><div class="sec-h">لاحقًا <span class="n">${later.length}</span></div>${ui.showLater ? listHTML(later, { showDate: true }) : `<div class="list"><button class="fold" data-act="fold-later" aria-expanded="false">${icon('chev-down', 16)}عرض ${later.length} ${later.length <= 10 ? 'مهام' : 'مهمة'}</button></div>`}</div>`;
+      h += `<div class="sec"><div class="sec-h"><b>لاحقًا</b> <span class="n">${later.length}</span></div>${ui.showLater ? listHTML(later, { showDate: true }) : `<div class="list"><button class="fold" data-act="fold-later" aria-expanded="false">${icon('chev-down', 16)}عرض ${later.length} ${later.length <= 10 ? 'مهام' : 'مهمة'}</button></div>`}</div>`;
     }
     if (!dismissed('swipe')) h += `<div class="tip">${icon('sparkle', 18)}<p>اسحب أي مهمة لليسار لتنجزها، ولليمين لتأجيلها لبكرة. واضغط العلم لتغيير أولويتها.</p><button class="x" data-act="dismiss" data-what="swipe" aria-label="إخفاء">${icon('x', 16)}</button></div>`;
     if (!isStandalone() && !dismissed('install')) h += `<div class="tip">${icon('phone', 18)}<p><b>ثبّت مُنجز على شاشتك الرئيسية</b> ليفتح كتطبيق ويعمل بدون إنترنت.</p><button class="lbtn" data-act="install" style="min-height:36px;padding:0 10px">كيف؟</button><button class="x" data-act="dismiss" data-what="install" aria-label="إخفاء">${icon('x', 16)}</button></div>`;
@@ -159,7 +158,7 @@
     $('#legend').hidden = !subs.length;
 
     const list = store.on(k), dt = D.parse(k);
-    $('#dayHead').innerHTML = `<h2>${DAYS[dt.getDay()]} ${dt.getDate()}</h2><span class="r">${D.relative(k)}</span>${list.length ? `<span class="c">${list.filter((x) => x.done).length}/${list.length}</span>` : ''}`;
+    $('#dayHead').innerHTML = `<span class="num">${dt.getDate()}</span><div><h2>${DAYS[dt.getDay()]}</h2><span class="r">${MONTHS[dt.getMonth()]} · ${D.relative(k)}</span></div>${list.length ? `<span class="c">${list.filter((x) => x.done).length}/${list.length} منجزة</span>` : ''}`;
     $('#dayList').innerHTML = list.length ? listHTML(list) : '';
     $('#qaDayIn').placeholder = list.length ? 'أضف لهذا اليوم…' : `لا مهام ${k === t ? 'اليوم' : 'في هذا اليوم'} — اكتب هنا لتضيف`;
   }
