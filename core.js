@@ -5,9 +5,8 @@
   const KEY = 'munjiz.data';
 
   // ---------- dates ----------
-  const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-  const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-  const DAYS_SHORT = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+  const L = window.MunjizI18n, t_ = L.t;
+  const MONTHS = t_('months'), DAYS = t_('days'), DAYS_SHORT = t_('daysShort');
   const WEEK_START = 0; // Sunday — the Omani study week
 
   const pad = (n) => String(n).padStart(2, '0');
@@ -38,36 +37,27 @@
   }
 
   const weekdayNames = (short) => Array.from({ length: 7 }, (_, i) => (short ? DAYS_SHORT : DAYS)[(i + WEEK_START) % 7]);
-  const fmtDay = (k) => { const d = parse(k); return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; };
-  const fmtShort = (k) => { const d = parse(k); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
+  const fmtDay = (k) => { const d = parse(k); return t_('fmtDay', DAYS[d.getDay()], d.getDate(), MONTHS[d.getMonth()]); };
+  const fmtShort = (k) => { const d = parse(k); return t_('fmtShort', d.getDate(), MONTHS[d.getMonth()]); };
 
-  function relative(k) {
-    const n = diffDays(todayKey(), k);
-    if (n === 0) return 'اليوم';
-    if (n === 1) return 'غدًا';
-    if (n === -1) return 'أمس';
-    if (n === 2) return 'بعد يومين';
-    if (n === -2) return 'قبل يومين';
-    if (n > 2) return `بعد ${n} ${n <= 10 ? 'أيام' : 'يومًا'}`;
-    return `قبل ${-n} ${-n <= 10 ? 'أيام' : 'يومًا'}`;
-  }
+  const relative = (k) => t_('rel', diffDays(todayKey(), k));
 
   function fmtTime(t) {
     if (!t) return '';
     let [h, m] = t.split(':').map(Number);
-    const s = h < 12 ? 'ص' : 'م';
+    const s = h < 12 ? t_('am') : t_('pm');
     h = h % 12 || 12;
     return `${h}:${pad(m)} ${s}`;
   }
 
   // ---------- vocabulary ----------
   const TYPES = {
-    task: { label: 'مهمة', icon: 'check-square' },
-    homework: { label: 'واجب', icon: 'file' },
-    study: { label: 'مذاكرة', icon: 'book' },
-    exam: { label: 'اختبار', icon: 'target' },
+    task: { label: t_('types').task, icon: 'check-square' },
+    homework: { label: t_('types').homework, icon: 'file' },
+    study: { label: t_('types').study, icon: 'book' },
+    exam: { label: t_('types').exam, icon: 'target' },
   };
-  const PRIORITY = [{ label: 'عادي' }, { label: 'مهم' }, { label: 'عاجل' }];
+  const PRIORITY = t_('prio').map((label) => ({ label }));
   const PALETTE = ['#2563EB', '#7C3AED', '#059669', '#D97706', '#DC2626', '#0891B2', '#DB2777', '#65A30D', '#64748B', '#1F2A44'];
 
   // ---------- store ----------
@@ -75,40 +65,30 @@
   const listeners = new Set();
   let state = null;
 
-  const DEFAULT_SETTINGS = { view: 'month', remind: 30, notify: false, theme: 'auto', examCal: true };
+  const DEFAULT_SETTINGS = { view: 'month', remind: 30, notify: false, theme: 'auto', examCal: true, lang: 'ar' };
+  const SUBJECT_COLORS = { math: '#2563EB', phys: '#7C3AED', prog: '#059669', eng: '#D97706', stat: '#DC2626', self: '#64748B' };
+  const defSubject = (id) => ({ id, name: t_('defaultSubjects')[id], color: SUBJECT_COLORS[id] });
 
   function fresh() {
     return {
       v: 1,
-      subjects: [
-        { id: 'math', name: 'رياضيات', color: '#2563EB' },
-        { id: 'phys', name: 'فيزياء', color: '#7C3AED' },
-        { id: 'prog', name: 'برمجة', color: '#059669' },
-        { id: 'eng', name: 'إنجليزي', color: '#D97706' },
-        { id: 'self', name: 'شخصي', color: '#64748B' },
-      ],
+      subjects: ['math', 'phys', 'prog', 'eng', 'self'].map(defSubject),
       tasks: [],
-      settings: { ...DEFAULT_SETTINGS },
+      settings: { ...DEFAULT_SETTINGS, lang: L.lang },
     };
   }
 
   function sample() {
     const t = todayKey(), s = fresh();
-    s.subjects.splice(4, 0, { id: 'stat', name: 'ستاتيك', color: '#DC2626' });
-    const T = (off, title, subject, type, extra = {}) => ({ id: uid(), title, date: addDays(t, off), time: '', subject, type, priority: 0, notes: '', done: false, createdAt: Date.now(), ...extra });
-    s.tasks = [
-      T(0, 'حل تمارين الفصل 3 — التكامل بالتجزئة', 'math', 'homework', { time: '16:00', priority: 1, notes: 'التمارين 3.1 إلى 3.4' }),
-      T(0, 'مراجعة قوانين نيوتن الثلاثة', 'phys', 'study', { time: '20:00', done: true }),
-      T(0, 'رفع واجب المختبر على E-Learning', 'prog', 'homework', { time: '23:30', priority: 2 }),
-      T(1, 'اختبار قصير — Free Body Diagram', 'stat', 'exam', { time: '10:00', priority: 2, notes: 'القاعة 204' }),
-      T(1, 'تسليم تقرير مختبر الفيزياء', 'phys', 'homework', { time: '14:00', priority: 1 }),
-      T(2, 'اجتماع مجموعة الدراسة', 'self', 'task', { time: '18:00' }),
-      T(3, 'مذاكرة مفردات Chapter 5', 'eng', 'study'),
-      T(5, 'اختبار منتصف الفصل — رياضيات', 'math', 'exam', { time: '08:00', priority: 2 }),
-      T(8, 'مشروع البرمجة — المرحلة الأولى', 'prog', 'homework', { priority: 1 }),
-      T(-1, 'قراءة الفصل 4 — العزوم', 'stat', 'study', { done: true }),
-      T(-2, 'واجب فيزياء رقم 3', 'phys', 'homework', { priority: 1 }),
+    s.subjects.splice(4, 0, defSubject('stat'));
+    const shape = [
+      ['math', 'homework', { time: '16:00', priority: 1 }], ['phys', 'study', { time: '20:00', done: true }], ['prog', 'homework', { time: '23:30', priority: 2 }],
+      ['stat', 'exam', { time: '10:00', priority: 2 }], ['phys', 'homework', { time: '14:00', priority: 1 }], ['self', 'task', { time: '18:00' }], ['eng', 'study', {}],
+      ['math', 'exam', { time: '08:00', priority: 2 }], ['prog', 'homework', { priority: 1 }], ['stat', 'study', { done: true }], ['phys', 'homework', { priority: 1 }],
     ];
+    s.tasks = t_('sample').map(([off, title, notes], i) => ({
+      id: uid(), title, notes: notes || '', date: addDays(t, off), time: '', subject: shape[i][0], type: shape[i][1], priority: 0, done: false, createdAt: Date.now() + i, ...shape[i][2],
+    }));
     return s;
   }
 
@@ -127,7 +107,7 @@
   }
 
   function persist(notify = true) {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast('تعذّر الحفظ — مساحة المتصفح ممتلئة أو محظورة'); }
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { toast(t_('saveFailed')); }
     if (notify) listeners.forEach((fn) => fn());
   }
 
@@ -145,6 +125,11 @@
     get: (id) => state.tasks.find((t) => t.id === id),
     settings: () => state.settings,
     setSetting(k, v) { state.settings[k] = v; persist(); },
+    setLang(lang) {
+      const D0 = L.dict[state.settings.lang || 'ar'].defaultSubjects, D1 = L.dict[lang].defaultSubjects;
+      state.subjects.forEach((s) => { if (D0[s.id] && s.name === D0[s.id]) s.name = D1[s.id]; });
+      state.settings.lang = lang; persist(false);
+    },
 
     add(t) {
       const task = { id: uid(), time: '', type: 'task', subject: '', priority: 0, notes: '', done: false, createdAt: Date.now(), ...t };
@@ -192,7 +177,7 @@
     undoMove(moved) { moved.forEach((m) => { const x = store.get(m.id); if (x) x.date = m.date; }); persist(); },
 
     subjects: () => state.subjects,
-    subject: (id) => state.subjects.find((s) => s.id === id) || { id: '', name: 'بدون مادة', color: '#9A958A' },
+    subject: (id) => state.subjects.find((s) => s.id === id) || { id: '', name: t_('noSubject'), color: '#9A958A' },
     addSubject(name, color) {
       name = (name || '').trim(); if (!name) return null;
       const found = state.subjects.find((s) => s.name === name); if (found) return found;
@@ -266,11 +251,11 @@
       } else {
         L.push(`DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${addDays(t.date, 1).replace(/-/g, '')}`);
       }
-      L.push(`SUMMARY:${icsEscape((t.type === 'exam' ? 'اختبار: ' : '') + t.title)}`);
+      L.push(`SUMMARY:${icsEscape((t.type === 'exam' ? t_('icsExam') : '') + t.title)}`);
       L.push(`DESCRIPTION:${icsEscape([s.name, TYPES[t.type].label, t.notes].filter(Boolean).join(' — '))}`);
       // alarm: N minutes before a timed task, 8 AM on the day for an all-day one
       L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEscape(t.title)}`, t.time ? `TRIGGER:-PT${remind}M` : 'TRIGGER;RELATED=START:PT8H', 'END:VALARM');
-      if (t.type === 'exam') L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEscape('غدًا: ' + t.title)}`, 'TRIGGER:-P1D', 'END:VALARM');
+      if (t.type === 'exam') L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEscape(t_('icsTomorrow') + t.title)}`, 'TRIGGER:-P1D', 'END:VALARM');
       L.push('END:VEVENT');
     });
     L.push('END:VCALENDAR');
@@ -344,6 +329,8 @@
     grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
     'arrow-down': '<path d="M12 5v14M19 12l-7 7-7-7"/>',
     'arrow-left': '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+    'arrow-right': '<path d="M5 12h14M12 5l7 7-7 7"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
     flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3.3.3 1.6 1.2 2.8 2.5 2.8Z"/>',
@@ -389,11 +376,11 @@
     return { dlg, close };
   }
 
-  function confirmSheet(msg, { ok = 'تأكيد', danger = false } = {}) {
+  function confirmSheet(msg, { ok = t_('confirm'), danger = false } = {}) {
     return new Promise((res) => {
       let answer = false;
       const { dlg, close } = sheet(`<div class="sh-body" style="padding-top:22px"><p style="margin:0 0 4px;font-size:1.05rem">${esc(msg)}</p></div>
-        <div class="sh-foot"><span class="sp"></span><button type="button" class="btn ghost" data-close>إلغاء</button><button type="button" class="btn ${danger ? 'danger-fill' : 'primary'}" data-ok>${esc(ok)}</button></div>`, { onClose: () => res(answer) });
+        <div class="sh-foot"><span class="sp"></span><button type="button" class="btn ghost" data-close>${t_('cancel')}</button><button type="button" class="btn ${danger ? 'danger-fill' : 'primary'}" data-ok>${esc(ok)}</button></div>`, { onClose: () => res(answer) });
       dlg.querySelector('[data-ok]').onclick = () => { answer = true; close(); };
     });
   }
@@ -403,21 +390,30 @@
   const normAr = (s) => s.replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
   const WD = [['احد', 0], ['اثنين', 1], ['ثلاثاء', 2], ['ثلاثا', 2], ['اربعاء', 3], ['اربعا', 3], ['خميس', 4], ['جمعه', 5], ['سبت', 6]];
   const B = '(?<=^|\\s)', E = '(?=\\s|$)';
-  const PM = ['م', 'مساء', 'العصر', 'عصر', 'المغرب', 'مغرب', 'العشاء', 'بالليل', 'الليل', 'ليل', 'الظهر', 'ظهر'];
-  const AM = ['ص', 'صباحا', 'الصبح', 'صبح', 'الصباح', 'الفجر', 'فجر'];
-  const SUF = `(${[...PM, ...AM].sort((a, b) => b.length - a.length).join('|')})`;
+  const WD_EN = [['sunday', 0], ['sun', 0], ['monday', 1], ['mon', 1], ['tuesday', 2], ['tues', 2], ['tue', 2], ['wednesday', 3], ['wed', 3], ['thursday', 4], ['thurs', 4], ['thur', 4], ['thu', 4], ['friday', 5], ['fri', 5], ['saturday', 6], ['sat', 6]];
+  const PM = ['م', 'مساء', 'العصر', 'عصر', 'المغرب', 'مغرب', 'العشاء', 'بالليل', 'الليل', 'ليل', 'الظهر', 'ظهر', 'pm', 'p.m.', 'in the evening', 'tonight'];
+  const AM = ['ص', 'صباحا', 'الصبح', 'صبح', 'الصباح', 'الفجر', 'فجر', 'am', 'a.m.', 'in the morning'];
+  // built-in subjects also answer to their name in the other language
+  const SUBJECT_ALIASES = { math: ['math', 'maths', 'رياضيات', 'رياضه'], phys: ['physics', 'فيزياء'], prog: ['programming', 'coding', 'برمجه'], eng: ['english', 'انجليزي'], stat: ['statics', 'ستاتيك'] };
+  const SUF = `(${[...PM, ...AM].sort((a, b) => b.length - a.length).map((x) => x.replace(/\./g, '\\.')).join('|')})`;
 
   function parseQuick(raw, baseDate) {
     let t = String(raw || '').replace(/[ً-ْـ]/g, '').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\s+/g, ' ').trim();
-    const n = normAr(t), cut = [], out = { date: null, time: null, subject: null, type: null, priority: null };
+    const n = normAr(t).toLowerCase(), cut = [], out = { date: null, time: null, subject: null, type: null, priority: null };
     const take = (re, fn) => { const m = re.exec(n); if (!m) return false; if (fn(m) === false) return false; cut.push([m.index, m.index + m[0].length]); return true; };
     const today = todayKey();
+    const nextDow = (target) => { let off = (target - parse(today).getDay() + 7) % 7; if (off === 0) off = 7; return addDays(today, off); };
 
     // dates, most specific first
     take(new RegExp(`${B}بعد (?:بكره|بكرا|باكر|غد)${E}`), () => { out.date = addDays(today, 2); }) ||
     take(new RegExp(`${B}بعد (\\d{1,2}) (?:يوم|ايام)${E}`), (m) => { out.date = addDays(today, +m[1]); }) ||
     take(new RegExp(`${B}(?:بكره|بكرا|باكر|غدا|الغد)${E}`), () => { out.date = addDays(today, 1); }) ||
     take(new RegExp(`${B}(?:اليوم|الليله)${E}`), () => { out.date = today; }) ||
+    take(new RegExp(`${B}(?:the )?day after tomorrow${E}`), () => { out.date = addDays(today, 2); }) ||
+    take(new RegExp(`${B}in (\\d{1,2}) days?${E}`), (m) => { out.date = addDays(today, +m[1]); }) ||
+    take(new RegExp(`${B}(?:tomorrow|tmrw|tmr)${E}`), () => { out.date = addDays(today, 1); }) ||
+    take(new RegExp(`${B}(?:today|tonight)${E}`), () => { out.date = today; }) ||
+    take(new RegExp(`${B}next week${E}`), () => { out.date = addDays(today, 7); }) ||
     take(new RegExp(`${B}الاسبوع (?:الجاي|القادم|الياي)${E}`), () => { out.date = addDays(today, 7); }) ||
     take(new RegExp(`${B}(\\d{1,2}) ?[/\\-.] ?(\\d{1,2})${E}`), (m) => {
       const d = +m[1], mo = +m[2];
@@ -432,7 +428,8 @@
       let off = (target - parse(today).getDay() + 7) % 7;
       if (off === 0) off = 7; // "الأحد" said on a Sunday means next Sunday
       out.date = addDays(today, off);
-    });
+    }) ||
+    take(new RegExp(`${B}(?:on )?(?:next )?(${WD_EN.map((w) => w[0]).join('|')})${E}`), (m) => { out.date = nextDow(WD_EN.find((w) => w[0] === m[1])[1]); });
 
     // time needs "الساعة", a colon, or ص/م — so "الفصل 3" stays part of the title
     const setTime = (h, mi, suf) => {
@@ -445,25 +442,28 @@
     };
     take(new RegExp(`${B}(?:ال)?ساعه (\\d{1,2})(?::(\\d{2}))?(?: ?${SUF})?${E}`), (m) => setTime(m[1], m[2], m[3])) ||
     take(new RegExp(`${B}(\\d{1,2}):(\\d{2})(?: ?${SUF})?${E}`), (m) => setTime(m[1], m[2], m[3])) ||
-    take(new RegExp(`${B}(\\d{1,2}) ?(ص|م)${E}`), (m) => setTime(m[1], 0, m[2]));
+    take(new RegExp(`${B}(\\d{1,2}) ?(ص|م)${E}`), (m) => setTime(m[1], 0, m[2])) ||
+    take(new RegExp(`${B}at (\\d{1,2})(?::(\\d{2}))?(?: ?${SUF})?${E}`), (m) => setTime(m[1], m[2], m[3])) ||
+    take(new RegExp(`${B}(\\d{1,2}) ?(am|pm|a\\.m\\.|p\\.m\\.)${E}`), (m) => setTime(m[1], 0, m[2]));
 
     // type and subject stay in the title — they read naturally there
-    if (/(اختبار|امتحان|كويز|ميد|فاينل|نهائي|quiz|exam|midterm|final)/i.test(n)) out.type = 'exam';
-    else if (/(واجب|تقرير|تسليم|مشروع|لاب|assignment|homework|report|project)/i.test(n)) out.type = 'homework';
-    else if (/(مذاكر|مراجع|ذاكر|راجع|حفظ|قراءه|اقرا|study|review)/i.test(n)) out.type = 'study';
+    if (/(اختبار|امتحان|كويز|ميد|فاينل|نهائي|quiz|exam|test|midterm|final)/i.test(n)) out.type = 'exam';
+    else if (/(واجب|تقرير|تسليم|مشروع|لاب|assignment|homework|report|project|lab|submit)/i.test(n)) out.type = 'homework';
+    else if (/(مذاكر|مراجع|ذاكر|راجع|حفظ|قراءه|اقرا|study|review|revise|revision|read|prepare)/i.test(n)) out.type = 'study';
+    const escRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     for (const s of state.subjects) {
-      const nm = normAr(s.name.trim()).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      if (nm && new RegExp(`(?<=^|\\s|ال)${nm}(?=\\s|$)`, 'i').test(n)) { out.subject = s.id; break; }
+      const names = [s.name, ...(SUBJECT_ALIASES[s.id] || [])].map((x) => escRe(normAr(x.trim()).toLowerCase())).filter(Boolean);
+      if (names.length && new RegExp(`(?<=^|\\s|ال)(?:${names.join('|')})(?=\\s|$|'s)`, 'i').test(n)) { out.subject = s.id; break; }
     }
     // priority: "!!" or عاجل → urgent, "!" or مهم → important
     const bangs = (t.match(/!/g) || []).length;
-    if (bangs >= 2 || /(?<=^|\s)عاجل(?=\s|$)/.test(n)) out.priority = 2;
-    else if (bangs === 1 || /(?<=^|\s)مهم(?=\s|$)/.test(n)) out.priority = 1;
+    if (bangs >= 2 || /(?<=^|\s)(?:عاجل|urgent|asap)(?=[\s:,.!]|$)/.test(n)) out.priority = 2;
+    else if (bangs === 1 || /(?<=^|\s)(?:مهم|important)(?=[\s:,.!]|$)/.test(n)) out.priority = 1;
 
     // drop the date/time words, then tidy dangling glue words
     cut.sort((a, b) => b[0] - a[0]).forEach(([a, b]) => { t = t.slice(0, a) + ' ' + t.slice(b); });
     t = t.replace(/!/g, ' ').replace(/\s+/g, ' ').trim()
-      .replace(/(?:^|\s)(?:يوم|في|الساعة|الساعه|على)$/, '').replace(/^(?:يوم|في)\s/, '').trim();
+      .replace(/(?:^|\s)(?:يوم|في|الساعة|الساعه|على|on|at|by|due)$/i, '').replace(/^(?:يوم|في|on)\s/i, '').trim();
     out.title = t;
     out.found = cut.length > 0 || !!(out.type || out.subject || out.priority);
     out.date = out.date || baseDate || today;

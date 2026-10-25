@@ -1,10 +1,10 @@
 /* مُنجز service worker: precache the whole app so it opens with no connection.
    Bump VERSION whenever any file below changes — the app then offers "تحديث". */
-const VERSION = 'munjiz-1.2.1';
+const VERSION = 'munjiz-1.3.0';
 const FILES = [
-  './', 'index.html', 'core.js', 'app.js', 'manifest.webmanifest',
+  './', 'index.html', 'i18n.js', 'core.js', 'app.js', 'manifest.webmanifest',
   'fonts/naskh-ar.woff2', 'fonts/naskh-la.woff2',
-  'fonts/ruqaa-700-ar.woff2', 'fonts/ruqaa-700-la.woff2',
+  'fonts/ruqaa-700-ar.woff2', 'fonts/ruqaa-700-la.woff2', 'fonts/kalam-700.woff2',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-192.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/badge-96.png',
 ];
 

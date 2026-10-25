@@ -18,12 +18,13 @@
 - تكرار أسبوعي أو يومي، ونقل المتأخر لليوم بضغطة.
 - إضافة المهام لتقويم الجوال مع تنبيه.
 - وضع فاتح وداكن، ونسخة احتياطية.
+- **العربية أو English**: تغيّر اللغة من الإعدادات، والإنجليزي يصير من اليسار لليمين. التسجيل بجملة يفهم الاثنين، ويفهم الخلط بينهم بعد.
 
 ## الخصوصية
 كل مهامك محفوظة على جهازك فقط (في المتصفح). لا يوجد حساب ولا سيرفر.
 
 ---
 
-Munjiz is an Arabic (RTL) study planner PWA: a calendar plus a prioritised task list, with Arabic natural-language quick-add. Vanilla HTML/JS with no build step. It works offline through a service worker. Data stays in `localStorage` on the device.
+Munjiz is an Arabic (RTL) / English (LTR) study planner PWA: a calendar plus a prioritised task list, with Arabic natural-language quick-add. Vanilla HTML/JS with no build step. It works offline through a service worker. Data stays in `localStorage` on the device.
 
-When you change a file, bump `VERSION` in both `sw.js` and `app.js` so installed copies pick up the update.
+All UI strings live in `i18n.js`. The parser in `core.js` understands Arabic, English, and both mixed in one sentence. When you change a file, bump `VERSION` in both `sw.js` and `app.js` so installed copies pick up the update.

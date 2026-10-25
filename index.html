@@ -18,14 +18,16 @@
 <link rel="preload" href="fonts/ruqaa-700-ar.woff2" as="font" type="font/woff2" crossorigin>
 <script>
   // apply the saved theme before first paint (no white flash at night)
-  try { const s = JSON.parse(localStorage.getItem('munjiz.data') || '{}').settings || {}; const th = s.theme || 'auto';
-    document.documentElement.dataset.theme = th === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : th; } catch (e) {}
+  try { const s = JSON.parse(localStorage.getItem('munjiz.data') || '{}').settings || {}; const th = s.theme || 'auto', el = document.documentElement;
+    el.dataset.theme = th === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : th;
+    if (s.lang === 'en') { el.lang = 'en'; el.dir = 'ltr'; } } catch (e) {}
 </script>
 <style>
   @font-face{font-family:'Naskh';src:url(fonts/naskh-ar.woff2) format('woff2');font-weight:400 700;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+0870-08FF,U+200C-200E,U+2010-2011,U+FB50-FDFF,U+FE70-FEFC}
   @font-face{font-family:'Naskh';src:url(fonts/naskh-la.woff2) format('woff2');font-weight:400 700;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD}
   @font-face{font-family:'Ruqaa';src:url(fonts/ruqaa-700-ar.woff2) format('woff2');font-weight:700;font-display:swap;unicode-range:U+0600-06FF,U+0750-077F,U+0870-08FF,U+200C-200E,U+2010-2011,U+FB50-FDFF,U+FE70-FEFC}
   @font-face{font-family:'Ruqaa';src:url(fonts/ruqaa-700-la.woff2) format('woff2');font-weight:700;font-display:swap;unicode-range:U+0000-00FF,U+2000-206F}
+  @font-face{font-family:'Kalam';src:url(fonts/kalam-700.woff2) format('woff2');font-weight:700;font-display:swap}
 
   /* Notebook: dotted paper, ink lines, Ruqaa headings, highlighter, red pen, sticky notes, rubber stamps.
      Dark = the same notebook at night: navy paper with chalky ink. */
@@ -41,7 +43,7 @@
     --red:#F08A6C; --amber:#E6B35E; --green:#79CF98; --hl:#6B5A1C; --hl-ink:#FFF1BE; --sticky:#E9D98A; --sticky-ink:#1F2A44; --tape:rgba(120,150,180,.55);
     --sel:#E7E2D4; --sel-ink:#1A2030; --scrim:rgba(0,0,0,.6); color-scheme:dark;
   }
-  :root{--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);--tabbar:64px;--b:1.5px solid var(--ink);--wob:3px 6px 4px 5px}
+  :root{--hand:'Ruqaa',serif;--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);--tabbar:64px;--b:1.5px solid var(--ink);--wob:3px 6px 4px 5px}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0}
   html{background:var(--desk)}
@@ -50,15 +52,22 @@
   button,input,select,textarea{font:inherit;color:inherit}
   button{cursor:pointer;touch-action:manipulation;background:none;border:0;padding:0}
   :focus-visible{outline:2px dashed var(--ink);outline-offset:3px}
-  h1,h2,h3{margin:0;font-family:'Ruqaa',serif;font-weight:700}
+  h1,h2,h3{margin:0;font-family:var(--hand);font-weight:700}
   .ic{flex:none}
   .sp{flex:1}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   [hidden]{display:none!important}
+  /* English: handwriting in Kalam, a touch smaller than Ruqaa's tall letters */
+  :root[lang=en]{--hand:'Kalam','Ruqaa',cursive}
+  :root[lang=en] .glance .num,:root[lang=en] .day-h .num{font-size:3rem}
+  :root[lang=en] .glance h1{font-size:1.45rem}
+  :root[lang=en] .cal-h h1{font-size:1.75rem}
+  :root[lang=en] .wd div,:root[lang=en] .w .wn{font-size:.82rem}
+  :root[lang=en] .sec-h b{font-size:1.2rem}
 
   /* ---------- header ---------- */
   .bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:4px;padding:calc(6px + var(--safe-t)) 10px 6px 6px;background:var(--paper);border-bottom:var(--b)}
-  .brand{display:flex;align-items:center;gap:8px;font-family:'Ruqaa',serif;font-size:1.45rem;line-height:1}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--hand);font-size:1.45rem;line-height:1}
   .brand img{width:28px;height:28px;border-radius:8px}
   .ibtn{width:44px;height:44px;display:grid;place-items:center;border-radius:10px;color:var(--ink)}
   .ibtn:active{background:var(--soft)}
@@ -71,7 +80,7 @@
 
   /* ---------- glance (today's page header) ---------- */
   .glance{display:flex;align-items:flex-end;gap:12px;padding:4px 2px 2px}
-  .glance .num{font-family:'Ruqaa',serif;font-size:3.6rem;line-height:.9;font-weight:700}
+  .glance .num{font-family:var(--hand);font-size:3.6rem;line-height:.9;font-weight:700}
   .glance h1{font-size:1.6rem;line-height:1.15}
   .glance p{margin:0;color:var(--muted);font-size:.92rem}
   .tally{display:flex;gap:4px;flex-wrap:wrap;margin:10px 2px 4px;align-items:center}
@@ -84,8 +93,8 @@
   .stampx.done{color:var(--green)}
   .sticky{display:grid;grid-template-columns:auto 1fr;gap:0 14px;align-items:center;width:calc(100% - 16px);max-width:420px;margin:20px 8px 2px;text-align:start;background:var(--sticky);color:var(--sticky-ink);padding:10px 14px 11px;transform:rotate(-1deg);box-shadow:0 10px 18px -8px rgba(80,60,0,.35);position:relative}
   .sticky::before{content:'';position:absolute;top:-11px;inset-inline-start:42%;width:76px;height:22px;background:var(--tape);transform:rotate(4deg)}
-  .sticky .h{font-family:'Ruqaa',serif;font-size:1.05rem}
-  .sticky .cd{font-family:'Ruqaa',serif;font-size:1.55rem;line-height:1.1;color:#B93A0C;grid-row:span 3}
+  .sticky .h{font-family:var(--hand);font-size:1.05rem}
+  .sticky .cd{font-family:var(--hand);font-size:1.55rem;line-height:1.1;color:#B93A0C;grid-row:span 3}
   .sticky .h{grid-column:2}
   .sticky .t{font-weight:700}
   .sticky .s{font-size:.82rem;opacity:.75}
@@ -107,15 +116,16 @@
   /* ---------- sections + ruled task lines ---------- */
   .sec{margin-top:18px}
   .sec-h{display:flex;align-items:center;gap:8px;padding:0 2px 2px}
-  .sec-h b{font-family:'Ruqaa',serif;font-size:1.3rem;font-weight:700}
+  .sec-h b{font-family:var(--hand);font-size:1.3rem;font-weight:700}
   .sec-h .n{color:var(--muted);font-size:.85rem}
   .sec-h .act{margin-inline-start:auto;font-size:.85rem;font-weight:700;color:var(--red);min-height:36px;padding:0 10px;border:1.5px solid var(--red);border-radius:var(--wob);display:inline-flex;align-items:center;gap:4px}
   .sec.over .sec-h b,.sec.over .sec-h .ic{color:var(--red)}
   .list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
   .row{position:relative;overflow:hidden;border-bottom:1px solid var(--rule)}
-  .rv{position:absolute;inset-block:0;display:flex;align-items:center;gap:6px;padding:0 18px;font-family:'Ruqaa',serif;font-size:1.1rem;opacity:0;width:100%}
-  .rv-done{inset-inline-start:0;background:#DCEFE2;color:#1F6B3F;justify-content:flex-start}
-  .rv-later{inset-inline-end:0;background:#FBEBCB;color:#7A4A06;justify-content:flex-end}
+  .rv{position:absolute;inset-block:0;display:flex;align-items:center;gap:6px;padding:0 18px;font-family:var(--hand);font-size:1.1rem;opacity:0;width:100%}
+  .rv{direction:ltr;left:0}
+  .rv-done{background:#DCEFE2;color:#1F6B3F;justify-content:flex-end}
+  .rv-later{background:#FBEBCB;color:#7A4A06;justify-content:flex-start}
   .row.sw-done .rv-done,.row.sw-later .rv-later{opacity:1}
   .row-in{position:relative;display:flex;align-items:center;gap:4px;min-height:56px;padding:2px 0;background:var(--paper);touch-action:pan-y;transition:transform .18s ease-out}
   .row.dragging .row-in{transition:none}
@@ -165,7 +175,7 @@
   .seg button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
   .calbox{touch-action:pan-y}
   .wd{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));padding-bottom:2px}
-  .wd div{text-align:center;font-family:'Ruqaa',serif;font-size:.95rem;color:var(--ink-2)}
+  .wd div{text-align:center;font-family:var(--hand);font-size:.95rem;color:var(--ink-2)}
   .mgrid,.wstrip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:var(--b);border-inline-start:var(--b);background:var(--paper)}
   .d,.w{position:relative;border-inline-end:var(--b);border-bottom:var(--b);display:flex;flex-direction:column;align-items:stretch;text-align:start;background:var(--paper)}
   .d{aspect-ratio:1/1;max-height:78px;padding:5px 3px 4px;align-items:center}
@@ -186,14 +196,14 @@
   .dd .pl{font-size:.65rem;color:var(--muted);line-height:1}
   /* week: seven tall cells in the same ink grid, weekday written inside */
   .w{min-height:66px;padding:4px 3px 6px;align-items:center;text-align:center;gap:2px}
-  .w .wn{font-family:'Ruqaa',serif;font-size:.88rem;color:var(--ink-2);line-height:1.15}
+  .w .wn{font-family:var(--hand);font-size:.88rem;color:var(--ink-2);line-height:1.15}
   .w .dn{align-self:center;font-size:1.2rem;line-height:1.3;margin-top:2px}
   .w .dd{justify-content:center}
   .w .cnt{font-size:.7rem;color:var(--muted)}
   .legend{display:flex;flex-wrap:wrap;gap:3px 12px;padding:8px 2px 0;font-size:.8rem;color:var(--ink-2)}
   .legend span{display:inline-flex;align-items:center;gap:5px}
   .day-h{display:flex;align-items:flex-end;gap:10px;margin:22px 2px 6px}
-  .day-h .num{font-family:'Ruqaa',serif;font-size:3rem;line-height:.9;font-weight:700}
+  .day-h .num{font-family:var(--hand);font-size:3rem;line-height:.9;font-weight:700}
   .day-h h2{font-size:1.35rem;line-height:1.2}
   .day-h .r{color:var(--muted);font-size:.88rem}
   .day-h .c{margin-inline-start:auto;color:var(--muted);font-size:.85rem}
@@ -224,7 +234,7 @@
   .big-in::placeholder{color:var(--faint);font-weight:400;font-style:italic}
   .heard{font-size:.82rem;color:var(--muted);min-height:1.2em;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
   .field{display:grid;gap:6px;border:0;padding:0;margin:0;min-width:0}
-  .lab{font-family:'Ruqaa',serif;font-size:1rem;color:var(--ink-2)}
+  .lab{font-family:var(--hand);font-size:1rem;color:var(--ink-2)}
   .scroller{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 16px 4px;margin:0 -16px}
   .scroller::-webkit-scrollbar{display:none}
   .opt{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:var(--b);border-radius:var(--wob);background:var(--paper);font-size:.92rem;font-weight:600;white-space:nowrap}
@@ -239,7 +249,7 @@
   .trow .in{min-width:130px}
   .trow .clr{width:40px;height:40px;display:grid;place-items:center;color:var(--muted);border-radius:8px}
   textarea.in{min-height:70px;resize:vertical;width:100%}
-  details.more summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Ruqaa',serif;font-size:1rem;color:var(--ink-2);min-height:40px}
+  details.more summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--hand);font-size:1rem;color:var(--ink-2);min-height:40px}
   details.more summary::-webkit-details-marker{display:none}
   details.more[open] summary .ic{transform:rotate(180deg)}
   details.more .inner{display:grid;gap:12px;padding-top:4px}
@@ -304,7 +314,7 @@
 </head>
 <body data-tab="agenda">
 <header class="bar">
-  <div class="brand"><img src="icons/icon-192.png" alt="" width="28" height="28">مُنجز</div>
+  <div class="brand"><img src="icons/icon-192.png" alt="" width="28" height="28"><span id="brandName">مُنجز</span></div>
   <span class="sp"></span>
   <button class="themeb" data-act="theme" id="themeBtn"></button>
   <button class="ibtn" data-act="menu" id="menuBtn" aria-label="الإعدادات"></button>
@@ -331,11 +341,11 @@
     <div class="cal-h">
       <h1 id="mt" aria-live="polite"></h1>
       <span class="sp"></span>
-      <button class="tbtn" data-act="today">اليوم</button>
+      <button class="tbtn" data-act="today" id="todayBtn">اليوم</button>
       <button class="navb" data-act="prev" id="pv" aria-label="السابق"></button>
       <button class="navb" data-act="next" id="nx" aria-label="التالي"></button>
     </div>
-    <div class="seg" role="group" aria-label="طريقة العرض">
+    <div class="seg" role="group" id="viewSeg" aria-label="طريقة العرض">
       <button data-act="view" data-v="month" id="vMonth">شهر</button>
       <button data-act="view" data-v="week" id="vWeek">أسبوع</button>
     </div>
@@ -359,13 +369,14 @@
   </section>
 </main>
 
-<nav class="tabbar" aria-label="التنقل">
+<nav class="tabbar" id="tabbar" aria-label="التنقل">
   <button class="tab" data-act="tab" data-t="agenda" id="tAgenda"></button>
   <button class="add" data-act="new" id="addBtn" aria-label="مهمة جديدة"></button>
   <button class="tab" data-act="tab" data-t="cal" id="tCal"></button>
 </nav>
 <datalist id="recent"></datalist>
 
+<script src="i18n.js" charset="utf-8"></script>
 <script src="core.js" charset="utf-8"></script>
 <script src="app.js" charset="utf-8"></script>
 </body>
