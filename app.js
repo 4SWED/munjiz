@@ -3,7 +3,7 @@
   'use strict';
   const { store, D, TYPES, PRIORITY, PALETTE, MONTHS, DAYS, icon, esc, toast, sheet, confirmSheet, toICS, saveFile, scheduleReminders, parseQuick } = Munjiz;
   const $ = (s, r = document) => r.querySelector(s);
-  const VERSION = '1.2.0';
+  const VERSION = '1.2.1';
 
   const now = new Date();
   const ui = {
@@ -22,8 +22,8 @@
     const mode = th === 'auto' ? (darkMQ.matches ? 'dark' : 'light') : th;
     document.documentElement.dataset.theme = mode;
     $('#themeColor').content = mode === 'dark' ? '#1A2030' : '#FFFCF5';
-    $('#themeBtn').innerHTML = icon(mode === 'dark' ? 'sun' : 'moon', 21);
-    $('#themeBtn').setAttribute('aria-label', mode === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي');
+    $('#themeBtn').innerHTML = mode === 'dark' ? `${icon('sun', 17)}نهاري` : `${icon('moon', 17)}ليلي`;
+    $('#themeBtn').setAttribute('aria-label', mode === 'dark' ? 'التبديل إلى الوضع النهاري' : 'التبديل إلى الوضع الليلي');
   }
   darkMQ.addEventListener('change', applyTheme);
 
@@ -59,8 +59,18 @@
     applyTheme();
     document.body.dataset.tab = ui.tab;
     renderTabs(); renderAgenda(); renderCal();
+    holdHeight();
     $('#recent').innerHTML = store.recentTitles().map((t) => `<option value="${esc(t)}">`).join('');
     if (refocus && !document.querySelector('dialog[open]')) { const el = document.querySelector(refocus); if (el) el.focus({ preventScroll: true }); }
+  }
+
+  // Tapping between days (or ticking tasks off) changes how long the page is; when it gets shorter
+  // the browser yanks the scroll position and the screen seems to jump. Let the visible pane only grow,
+  // and start over when the tab, view or month changes.
+  function holdHeight(reset) {
+    const pane = ui.tab === 'cal' ? $('#calPane') : $('#agendaPane');
+    if (reset || matchMedia('(min-width:900px)').matches) { $('#calPane').style.minHeight = $('#agendaPane').style.minHeight = ''; if (reset) return; }
+    pane.style.minHeight = Math.max(pane.offsetHeight, parseFloat(pane.style.minHeight) || 0) + 'px';
   }
 
   function renderTabs() {
@@ -164,9 +174,10 @@
   }
 
   // ---------- navigation ----------
-  function setTab(t) { ui.tab = t; try { sessionStorage.setItem('munjiz.tab', t); } catch (e) {} render(); scrollTo({ top: 0 }); }
+  function setTab(t) { ui.tab = t; try { sessionStorage.setItem('munjiz.tab', t); } catch (e) {} holdHeight(true); render(); scrollTo({ top: 0 }); }
   function select(k) { ui.selected = k; const d = D.parse(k); ui.y = d.getFullYear(); ui.m = d.getMonth(); render(); }
   function step(dir) {
+    holdHeight(true);
     if (view() === 'week') { select(D.addDays(ui.selected, dir * 7)); return; }
     const d = new Date(ui.y, ui.m + dir, 1); ui.y = d.getFullYear(); ui.m = d.getMonth();
     const td = new Date();
@@ -536,7 +547,7 @@
     else if (a === 'next') step(1);
     else if (a === 'today') goToday();
     else if (a === 'day') select(el.dataset.key);
-    else if (a === 'view') store.setSetting('view', el.dataset.v);
+    else if (a === 'view') { holdHeight(true); store.setSetting('view', el.dataset.v); }
     else if (a === 'new') openTask({ date: ui.tab === 'cal' ? ui.selected : D.todayKey() });
     else if (a === 'edit') openTask({ id });
     else if (a === 'toggle') { const t = store.get(id); if (t && !t.done) complete(id); else store.toggle(id); }

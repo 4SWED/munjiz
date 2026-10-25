@@ -62,6 +62,7 @@
   .brand img{width:28px;height:28px;border-radius:8px}
   .ibtn{width:44px;height:44px;display:grid;place-items:center;border-radius:10px;color:var(--ink)}
   .ibtn:active{background:var(--soft)}
+  .themeb{height:36px;padding:0 10px;margin-inline-end:4px;border:var(--b);border-radius:var(--wob);display:inline-flex;align-items:center;gap:5px;font-size:.85rem;font-weight:700;background:var(--paper)}
 
   /* ---------- layout ---------- */
   main{max-width:1240px;margin:0 auto;padding:0 0 calc(var(--tabbar) + 24px + var(--safe-b))}
@@ -167,25 +168,26 @@
   .wd div{text-align:center;font-family:'Ruqaa',serif;font-size:.95rem;color:var(--ink-2)}
   .mgrid,.wstrip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:var(--b);border-inline-start:var(--b);background:var(--paper)}
   .d,.w{position:relative;border-inline-end:var(--b);border-bottom:var(--b);display:flex;flex-direction:column;align-items:stretch;text-align:start;background:var(--paper)}
-  .d{aspect-ratio:1/1;padding:4px 5px}
-  .d .dn,.w .dn{position:relative;z-index:0;align-self:flex-start;font-weight:700;font-size:1rem;line-height:1.5;padding:0 4px;font-variant-numeric:tabular-nums}
+  .d{aspect-ratio:1/1;max-height:78px;padding:5px 3px 4px;align-items:center}
+  .d .dn,.w .dn{position:relative;z-index:0;align-self:center;min-width:26px;text-align:center;font-weight:700;font-size:1rem;line-height:1.5;padding:0 3px;font-variant-numeric:tabular-nums}
   .d.out{background:repeating-linear-gradient(-45deg,var(--paper) 0 6px,var(--hatch) 6px 7px)}
   .d.out .dn{color:var(--faint);font-weight:500}
   /* highlighter under today's number */
   .d.today .dn::before,.w.today .dn::before{content:'';position:absolute;inset:5px -3px 1px;background:var(--hl);z-index:-1;border-radius:3px 8px 4px 9px;transform:rotate(-2deg)}
   .d.today .dn,.w.today .dn{color:var(--hl-ink)}
   /* red pen ring drawn around the selected cell */
-  .d.sel::after,.w.sel::after{content:'';position:absolute;inset:4px;border:2px solid var(--red);border-radius:48% 52% 46% 54% / 55% 45% 55% 45%;transform:rotate(-2deg);pointer-events:none}
+  .d.sel .dn::after,.w.sel .dn::after{content:'';position:absolute;left:50%;top:50%;width:34px;height:32px;margin:-16px 0 0 -17px;border:2px solid var(--red);border-radius:48% 52% 46% 54% / 55% 45% 55% 45%;transform:rotate(-8deg);pointer-events:none}
+  .w.sel .dn::after{width:38px;height:33px;margin:-16px 0 0 -19px}
   .d:active,.w:active{background:var(--paper-2)}
-  .dd{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin-top:auto;min-height:8px}
+  .dd{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;align-items:center;margin-top:auto;min-height:8px}
   .dot{width:7px;height:7px;border-radius:50% 45% 55% 50%;flex:none}
   .dot.done{background:transparent!important;box-shadow:inset 0 0 0 1.5px currentColor}
   .dot.exam{border-radius:0;width:9px;height:9px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
   .dd .pl{font-size:.65rem;color:var(--muted);line-height:1}
   /* week: seven tall cells in the same ink grid, weekday written inside */
-  .w{aspect-ratio:1/1.55;padding:5px 5px 6px;align-items:center;text-align:center}
-  .w .wn{font-family:'Ruqaa',serif;font-size:.9rem;color:var(--ink-2);line-height:1.3}
-  .w .dn{align-self:center;font-size:1.25rem}
+  .w{min-height:66px;padding:4px 3px 6px;align-items:center;text-align:center;gap:2px}
+  .w .wn{font-family:'Ruqaa',serif;font-size:.88rem;color:var(--ink-2);line-height:1.15}
+  .w .dn{align-self:center;font-size:1.2rem;line-height:1.3;margin-top:2px}
   .w .dd{justify-content:center}
   .w .cnt{font-size:.7rem;color:var(--muted)}
   .legend{display:flex;flex-wrap:wrap;gap:3px 12px;padding:8px 2px 0;font-size:.8rem;color:var(--ink-2)}
@@ -292,8 +294,8 @@
     .tabbar .tab{display:none}
     .add{transform:none}
     .toast{bottom:28px}
-    .d{aspect-ratio:auto;min-height:88px}
-    .w{aspect-ratio:auto;min-height:150px}
+    .d{aspect-ratio:auto;max-height:none;min-height:88px}
+    .w{min-height:84px}
     dialog.sheet{width:min(560px,calc(100vw - 32px));margin:auto;border-radius:12px;border-bottom:var(--b)}
     .grab{display:none}
   }
@@ -304,7 +306,7 @@
 <header class="bar">
   <div class="brand"><img src="icons/icon-192.png" alt="" width="28" height="28">مُنجز</div>
   <span class="sp"></span>
-  <button class="ibtn" data-act="theme" id="themeBtn" aria-label="الوضع الليلي"></button>
+  <button class="themeb" data-act="theme" id="themeBtn"></button>
   <button class="ibtn" data-act="menu" id="menuBtn" aria-label="الإعدادات"></button>
 </header>
 
